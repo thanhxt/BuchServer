@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS titel (
     id          INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     titel       VARCHAR(40) NOT NULL,
     untertitel  VARCHAR(40),
-    buch_id     CHAR(36) UNIQUE NOT NULL references buch(id)
+    buch_id     INT UNIQUE NOT NULL references buch(id)
 ) TABLESPACE buchspace ROW_FORMAT=COMPACT;
 ALTER TABLE titel AUTO_INCREMENT=1000;
 
@@ -57,8 +57,18 @@ CREATE TABLE IF NOT EXISTS abbildung (
     id              INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     beschriftung    VARCHAR(32) NOT NULL,
     content_type    VARCHAR(16) NOT NULL,
-    buch_id         CHAR(36) NOT NULL references buch(id),
+    buch_id         INT NOT NULL references buch(id),
 
     INDEX abbildung_buch_id_idx(buch_id)
 ) TABLESPACE buchspace ROW_FORMAT=COMPACT;
 ALTER TABLE abbildung AUTO_INCREMENT=1000;
+
+CREATE TABLE IF NOT EXISTS buch_file (
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    filename VARCHAR(255) NOT NULL,
+    data LONGBLOB NOT NULL,
+    buch_id INT UNIQUE NOT NULL references buch(id),
+
+    INDEX buch_file_buch_id_idx(buch_id)
+) TABLESPACE buchspace ROW_FORMAT=COMPACT;
+ALTER TABLE buch_file AUTO_INCREMENT=1000;
