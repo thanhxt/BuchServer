@@ -52,6 +52,7 @@ import { getLogger } from '../../logger/logger.js';
 import { ResponseTimeInterceptor } from '../../logger/response-time.interceptor.js';
 import { type Abbildung } from '../entity/abbildung.entity.js';
 import { type Buch } from '../entity/buch.entity.js';
+import { BuchFile } from '../entity/buchFile.entity.js';
 import { type Titel } from '../entity/titel.entity.js';
 import { BuchWriteService } from '../service/buch-write.service.js';
 import { BuchDTO, BuchDtoOhneRef } from './buchDTO.entity.js';
@@ -215,6 +216,13 @@ export class BuchWriteController {
             untertitel: titelDTO.untertitel,
             buch: undefined,
         };
+        const buchFileDTO = buchDTO.buchFile;
+        const file: BuchFile = {
+            id: undefined,
+            filename: buchFileDTO.filename,
+            data: buchFileDTO.data,
+            buch: undefined,
+        };
         const abbildungen = buchDTO.abbildungen?.map((abbildungDTO) => {
             const abbildung: Abbildung = {
                 id: undefined,
@@ -238,13 +246,14 @@ export class BuchWriteController {
             schlagwoerter: buchDTO.schlagwoerter,
             titel,
             abbildungen,
-            file: undefined,
+            file,
             erzeugt: new Date(),
             aktualisiert: new Date(),
         };
 
         // Rueckwaertsverweise
         buch.titel.buch = buch;
+        buch.file.buch = buch;
         buch.abbildungen?.forEach((abbildung) => {
             abbildung.buch = buch;
         });

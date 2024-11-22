@@ -39,6 +39,7 @@ import {
 } from 'class-validator';
 import { type BuchArt } from '../entity/buch.entity.js';
 import { AbbildungDTO } from './abbildungDTO.entity.js';
+import { BuchFileDTO } from './buchfileDTO.entity.js';
 import { TitelDTO } from './titelDTO.entity.js';
 
 export const MAX_RATING = 5;
@@ -99,6 +100,11 @@ export class BuchDtoOhneRef {
  * Entity-Klasse für Bücher ohne TypeORM.
  */
 export class BuchDTO extends BuchDtoOhneRef {
+    @ValidateNested()
+    @Type(() => BuchFileDTO)
+    @ApiProperty({ type: BuchFileDTO })
+    readonly buchFile!: BuchFileDTO;
+
     @ValidateNested()
     @Type(() => TitelDTO)
     @ApiProperty({ type: TitelDTO })

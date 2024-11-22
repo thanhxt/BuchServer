@@ -23,6 +23,12 @@ import { HttpException, HttpStatus } from '@nestjs/common';
  * @packageDocumentation
  */
 
+export class NoDataException extends HttpException {
+    constructor(readonly fileName: string | undefined) {
+        super(`Die Datei ${fileName} hat keine Daten.`, HttpStatus.NO_CONTENT);
+    }
+}
+
 /**
  * Exception-Klasse für eine bereits existierende ISBN-Nummer.
  */

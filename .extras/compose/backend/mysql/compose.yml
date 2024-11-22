@@ -34,10 +34,10 @@ services:
     # SHOW VARIABLES LIKE "ssl_key";
     # SHOW VARIABLES LIKE "ssl_cert";
     # SHOW VARIABLES LIKE "ssl_ca";
-    #command: >
-    #  --ssl-key=/var/lib/mysql/server-key.pem
-    #  --ssl-cert=/var/lib/mysql/server-cert.pem
-    #  --ssl-ca=/var/lib/mysql/ca.pem
+    command: >
+      --ssl-key=/var/lib/mysql/server-key.pem
+      --ssl-cert=/var/lib/mysql/server-cert.pem
+      --ssl-ca=/var/lib/mysql/ca.pem
     volumes:
       - type: bind
         source: C:/Zimmermann/volumes/mysql/db
@@ -50,18 +50,18 @@ services:
       - type: bind
         source: C:/Zimmermann/volumes/mysql/log
         target: /var/log
-      #- type: bind
-      #  source: C:/Zimmermann/volumes/mysql/tls/server-key.pem
-      #  target: /var/lib/mysql/server-key.pem
-        #read_only: true
-      #- type: bind
-      #  source: C:/Zimmermann/volumes/mysql/tls/server-cert.pem
-      #  target: /var/lib/mysql/server-cert.pem
-        #read_only: true
-      #- type: bind
-      #  source: C:/Zimmermann/volumes/mysql/tls/server-cert.pem
-      #  target: /var/lib/mysql/ca.pem
-        #read_only: true
+      - type: bind
+        source: C:/Zimmermann/volumes/mysql/tls/server-key.pem
+        target: /var/lib/mysql/server-key.pem
+        read_only: true
+      - type: bind
+        source: C:/Zimmermann/volumes/mysql/tls/server-cert.pem
+        target: /var/lib/mysql/server-cert.pem
+        read_only: true
+      - type: bind
+        source: C:/Zimmermann/volumes/mysql/tls/server-cert.pem
+        target: /var/lib/mysql/ca.pem
+        read_only: true
       - type: bind
         source: C:/Zimmermann/volumes/mysql/csv/buch
         # https://dev.mysql.com/doc/refman/8.2/en/server-system-variables.html#sysvar_secure_file_priv
