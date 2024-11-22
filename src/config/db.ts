@@ -35,4 +35,4 @@ export const dbType =
     type === 'oracle' ||
     type === 'sqlite'
         ? type
-        : 'postgres';
+        : 'mysql';
