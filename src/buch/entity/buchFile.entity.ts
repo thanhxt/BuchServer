@@ -16,9 +16,9 @@ export class BuchFile {
     filename: string | undefined;
 
     @Column({
-        type: 'bytea',
+        type: 'blob',
     })
-    data: Uint8Array | undefined;
+    data: Buffer | undefined;
 
     @OneToOne(() => Buch, (buch) => buch.file)
     @JoinColumn({ name: 'buch_id' })
