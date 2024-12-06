@@ -37,4 +37,5 @@ export type Suchkriterien = {
     readonly java?: string;
     readonly python?: string;
     readonly titel?: string;
+    readonly filename?: string;
 };

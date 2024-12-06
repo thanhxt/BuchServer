@@ -27,6 +27,6 @@ export class BuchFile {
     public toString = (): string =>
         JSON.stringify({
             id: this.id,
-            filename: this.filename,
+            // filename: this.filename,
         });
 }
