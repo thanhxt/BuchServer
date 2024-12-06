@@ -27,6 +27,7 @@ import { Abbildung } from '../entity/abbildung.entity.js';
 import { Buch } from '../entity/buch.entity.js';
 import { Titel } from '../entity/titel.entity.js';
 import { type Suchkriterien } from './suchkriterien.js';
+import { BuchFile } from '../entity/buchFile.entity.js';
 
 /** Typdefinitionen für die Suche mit der Buch-ID. */
 export type BuildIdParams = {
@@ -52,6 +53,10 @@ export class QueryBuilder {
     readonly #abbildungAlias = `${Abbildung.name
         .charAt(0)
         .toLowerCase()}${Abbildung.name.slice(1)}`;
+
+    readonly #buchfileAlias = `${BuchFile.name
+        .charAt(0)
+        .toLowerCase()}${BuchFile.name.slice(1)}`;
 
     readonly #repo: Repository<Buch>;
 
@@ -88,6 +93,21 @@ export class QueryBuilder {
         return queryBuilder;
     }
 
+    /**
+     * Ein Buch-File asynchron anhand seiner ID suchen
+     * @param id ID des gesuchten Buch-Files
+     * @returns QueryBuilder
+     */
+    buildFile(id: number) {
+        const queryBuilder = this.#repo.createQueryBuilder(this.#buchAlias);
+
+        queryBuilder.innerJoinAndSelect(
+            `${this.#buchAlias}.file`,
+            this.#buchfileAlias,
+        );
+        queryBuilder.where(`${this.#buchAlias}.id = :id`, { id: id }); // eslint-disable-line object-shorthand
+        return queryBuilder;
+    }
     /**
      * Bücher asynchron suchen.
      * @param suchkriterien JSON-Objekt mit Suchkriterien

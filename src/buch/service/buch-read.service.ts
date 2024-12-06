@@ -99,10 +99,26 @@ export class BuchReadService {
                 this.#logger.debug(
                     'findById: abbildungen=%o',
                     buch.abbildungen,
-                );
+                );  
             }
         }
         return buch;
+    }
+
+    /**
+     * Ein Buch-File asynchron anhand seiner ID suchen
+     * @param id ID des gesuchten Buch-Files
+     * @returns Das gefundene Buch-File in einem Promise aus ES2015.
+     * @throws NotFoundException falls kein Buch-File mit der ID existiert
+     */
+    async findFile(id: number) {
+        this.#logger.debug('findFile: id=%d', id);
+
+        const buch = await this.#queryBuilder.buildFile(id).getOne();
+        if (buch === null) {
+            throw new NotFoundException(`Es gibt kein Buch-File mit der ID ${id}.`);
+        }
+        return buch?.file;
     }
 
     /**
