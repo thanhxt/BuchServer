@@ -1,3 +1,5 @@
+// eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair
+/* eslint-disable max-lines */
 // Copyright (C) 2021 - present Juergen Zimmermann, Hochschule Karlsruhe
 //
 // This program is free software: you can redistribute it and/or modify
@@ -25,17 +27,20 @@ import {
     Headers,
     HttpCode,
     HttpStatus,
+    NotFoundException,
     Param,
     Post,
     Put,
     Req,
     Res,
+    UploadedFile,
     UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiConsumes,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiHeader,
@@ -56,7 +61,10 @@ import { BuchFile } from '../entity/buchFile.entity.js';
 import { type Titel } from '../entity/titel.entity.js';
 import { BuchWriteService } from '../service/buch-write.service.js';
 import { BuchDTO, BuchDtoOhneRef } from './buchDTO.entity.js';
+// import { BuchFileDTO } from './buchfileDTO.entity.js';
 import { getBaseUri } from './getBaseUri.js';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express'
 
 const MSG_FORBIDDEN = 'Kein Token mit ausreichender Berechtigung vorhanden';
 /**
@@ -69,7 +77,6 @@ const MSG_FORBIDDEN = 'Kein Token mit ausreichender Berechtigung vorhanden';
 @ApiBearerAuth()
 export class BuchWriteController {
     readonly #service: BuchWriteService;
-
     readonly #logger = getLogger(BuchWriteController.name);
 
     constructor(service: BuchWriteService) {
@@ -189,6 +196,65 @@ export class BuchWriteController {
     }
 
     /**
+     * Ein vorhandenes BuchFile wird asynchron aktualisiert.
+     * 
+     * File wird Hochgeladen anhand durch Nest eingebauten Moduls Multer von Express.
+     * https://docs.nestjs.com/techniques/file-upload#example
+     */
+    @Put(':id/file')
+    @Roles({ roles: ['admin', 'user'] })
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiConsumes('multipart/form-data') // Indicate support for file uploads
+    @ApiOperation({
+        summary: 'Ein vorhandenes BuchFile aktualisieren',
+        tags: ['Aktualisieren'],
+    })
+    @ApiHeader({
+        name: 'If-Match',
+        description: 'Header für optimistische Synchronisation',
+        required: false,
+    })
+    @ApiNoContentResponse({ description: 'Erfolgreich aktualisiert' })
+    @ApiBadRequestResponse({ description: 'Fehlerhafte BuchFile-Daten' })
+    @ApiPreconditionFailedResponse({
+        description: 'Falsche Version im Header "If-Match"',
+    })
+    @ApiResponse({
+        status: HttpStatus.PRECONDITION_REQUIRED,
+        description: 'Header "If-Match" fehlt',
+    })
+    @ApiForbiddenResponse({ description: MSG_FORBIDDEN })
+    @UseInterceptors(FileInterceptor('file'))
+    async putFile(
+        @UploadedFile() file: Express.Multer.File,
+        @Param('id') idStr: string,
+        @Headers('If-Match') version: string | undefined,
+        @Res() res: Response,
+    ): Promise<Response> {
+        this.#logger.debug('putFile: id=%s, file=%s, version=%s', idStr, file.originalname, version);
+        const id = Number(idStr);
+        if (!Number.isInteger(id)) {
+            this.#logger.debug('putFile: not isInteger()');
+            throw new NotFoundException(`Die Buch-ID ${idStr} ist ungueltig.`);
+        }
+
+        if (version === undefined) {
+            const msg = 'Header "If-Match" fehlt';
+            this.#logger.debug('put: msg=%s', msg);
+            return res
+                .status(HttpStatus.PRECONDITION_REQUIRED)
+                .set('Content-Type', 'application/json')
+                .send(msg);
+        }
+
+        const buchFile = this.#buchfileDTOtoFile(file);
+
+        const neueVersion = await this.#service.updateFile({ id, buchFile, version });
+        this.#logger.debug('putFile: version=%d', neueVersion);
+        return res.header('ETag', `"${neueVersion}"`).send();
+    }
+
+    /**
      * Ein Buch wird anhand seiner ID-gelöscht, die als Pfad-Parameter angegeben
      * ist. Der zurückgelieferte Statuscode ist `204` (`No Content`).
      *
@@ -208,19 +274,30 @@ export class BuchWriteController {
         await this.#service.delete(id);
     }
 
+    @Delete(':id/file')
+    @Roles({ roles: ['admin'] })
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async deleteFile(@Param('id') id: number) {
+        this.#logger.debug('deleteFile: id=%s', id);
+        await this.#service.deleteFile(id);
+    }
+
+    #buchfileDTOtoFile(buchfile: Express.Multer.File): BuchFile {
+        const file: BuchFile = {
+            id: undefined,
+            filename: buchfile.originalname,
+            data: buchfile.buffer,
+            buch: undefined,
+        };
+        return file;
+    }
+
     #buchDtoToBuch(buchDTO: BuchDTO): Buch {
         const titelDTO = buchDTO.titel;
         const titel: Titel = {
             id: undefined,
             titel: titelDTO.titel,
             untertitel: titelDTO.untertitel,
-            buch: undefined,
-        };
-        const buchFileDTO = buchDTO.buchFile;
-        const file: BuchFile = {
-            id: undefined,
-            filename: buchFileDTO.filename,
-            data: buchFileDTO.data,
             buch: undefined,
         };
         const abbildungen = buchDTO.abbildungen?.map((abbildungDTO) => {
@@ -246,14 +323,13 @@ export class BuchWriteController {
             schlagwoerter: buchDTO.schlagwoerter,
             titel,
             abbildungen,
-            file,
+            file: undefined,
             erzeugt: new Date(),
             aktualisiert: new Date(),
         };
 
         // Rueckwaertsverweise
         buch.titel.buch = buch;
-        buch.file.buch = buch;
         buch.abbildungen?.forEach((abbildung) => {
             abbildung.buch = buch;
         });
