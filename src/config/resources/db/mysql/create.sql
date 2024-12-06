@@ -65,8 +65,8 @@ ALTER TABLE abbildung AUTO_INCREMENT=1000;
 
 CREATE TABLE IF NOT EXISTS buch_file (
     id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    filename VARCHAR(255) NOT NULL,
-    data LONGBLOB NOT NULL,
+    filename VARCHAR(255),
+    data LONGBLOB,
     buch_id INT UNIQUE NOT NULL references buch(id),
 
     INDEX buch_file_buch_id_idx(buch_id)
