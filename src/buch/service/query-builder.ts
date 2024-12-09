@@ -101,7 +101,7 @@ export class QueryBuilder {
     buildFile(id: number) {
         const queryBuilder = this.#repo.createQueryBuilder(this.#buchAlias);
 
-        queryBuilder.innerJoinAndSelect(
+        queryBuilder.leftJoinAndSelect(
             `${this.#buchAlias}.file`,
             this.#buchfileAlias,
         );

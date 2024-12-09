@@ -291,10 +291,15 @@ export class BuchWriteService {
             throw new VersionInvalidException(versionStr);
         }
 
+
+        const hasFile = await this.#readService.findFile(id);
+        if (hasFile !== undefined) {
+            throw new NotFoundException(`Es gibt bereits ein Buch-File bei der ID ${id}.`);
+        }
+
         const buchOhneFile = await this.#readService.findById({ id });
-        
         if (buchOhneFile.file !== undefined) {
-            throw new NotFoundException(`Es gibt bereits ein Buch-File mit der IDs ${id}.`);
+            throw new NotFoundException(`Es gibt kein Buch mit der ID ${id}.`);
         }
 
         const buch = {

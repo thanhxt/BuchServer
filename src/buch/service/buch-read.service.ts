@@ -109,15 +109,19 @@ export class BuchReadService {
      * Ein Buch-File asynchron anhand seiner ID suchen
      * @param id ID des gesuchten Buch-Files
      * @returns Das gefundene Buch-File in einem Promise aus ES2015.
-     * @throws NotFoundException falls kein Buch-File mit der ID existiert
      */
     async findFile(id: number) {
         this.#logger.debug('findFile: id=%d', id);
 
         const buch = await this.#queryBuilder.buildFile(id).getOne();
-        if (buch === null) {
-            throw new NotFoundException(`Es gibt kein Buch-File mit der ID ${id}.`);
+
+        // nullish coalescing operator mit buch?.file funktioniert nicht
+        // absicherung gegen null 
+        if (!buch || !buch.file) {
+            this.#logger.debug('findFile: kein Buch-File gefunden id=%d', id);
+            return undefined;
         }
+
         return buch?.file;
     }
 
