@@ -145,14 +145,10 @@ export class BuchWriteService {
             throw new NotFoundException(`Es gibt kein Buch mit der ID ${id}.`);
         }
 
-
-        // TODO Buch-File bereits vorhanden Exception werfen
-        // TODO in validateFileUpdate implementieren
         const validateResult = await this.#validateFileUpdate(buchFile, id, version);
-        // TODO bekommte ein Promise<Buch> zurück, wird aber als Object erkannt
-        // if (!(validateResult instanceof Buch)) {
-        //     return validateResult;
-        // }
+        if (!this.#isBuch(validateResult)) {
+            return validateResult;
+        }
 
         const buch = {
             ...validateResult,
@@ -217,6 +213,10 @@ export class BuchWriteService {
     async deleteFile(id: number) {
         this.#logger.debug('deleteFile: id=%d', id);
         const buch = await this.#readService.findFile(id);
+        if (buch === undefined) {
+            throw new NotFoundException(`Es gibt kein Buch-File bei der ID ${id}.`);
+        }
+        
         let deleteResult: DeleteResult | undefined;
         await this.#repo.manager.transaction(async (transactionalMgr) =>{
             const fileid = buch?.id;
@@ -291,9 +291,9 @@ export class BuchWriteService {
             throw new VersionInvalidException(versionStr);
         }
 
-
         const hasFile = await this.#readService.findFile(id);
         if (hasFile !== undefined) {
+            this.#logger.debug('validateFileUpdate exception1: hasFile=%o', hasFile);
             throw new NotFoundException(`Es gibt bereits ein Buch-File bei der ID ${id}.`);
         }
 
@@ -323,4 +323,24 @@ export class BuchWriteService {
         this.#logger.debug('#validateUpdate: buch=%o', buch.file?.filename);
         return buch;
     }
+    /**
+     * Type guard kontrolliert, ob ein Objekt eine Instanz von Buch ist
+     * @param obj zu kontrollierendes Objekt
+     * @returns true, falls obj eine Instanz von Buch ist, sonst false
+     */
+    #isBuch(obj: any): obj is Buch {
+        if (obj == null || typeof obj !== 'object') {
+            return false;
+        }
+
+        // Kontrolle der erforderlichen Eigenschaften und deren Typen
+        return (
+            'id' in obj && typeof obj.id === 'number' &&
+            'isbn' in obj && typeof obj.isbn === 'string' &&
+            'preis' in obj && typeof obj.preis === 'number' &&
+            'schlagwoerter' in obj && (Array.isArray(obj.schlagwoerter) || obj.schlagwoerter === null) &&
+            'erzeugt' in obj && (typeof obj.erzeugt === 'string' || obj.erzeugt instanceof Date)
+        );
+    }
+
 }

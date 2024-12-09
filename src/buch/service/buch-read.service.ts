@@ -115,10 +115,11 @@ export class BuchReadService {
 
         const buch = await this.#queryBuilder.buildFile(id).getOne();
 
-        // nullish coalescing operator mit buch?.file funktioniert nicht
-        // absicherung gegen null 
-        if (!buch || !buch.file) {
-            this.#logger.debug('findFile: kein Buch-File gefunden id=%d', id);
+        if (buch === null) {
+            throw new NotFoundException(`Es gibt kein Buch-File bei der ID ${id}.`);
+        }
+
+        if (buch.file === null) {
             return undefined;
         }
 
